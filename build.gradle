@@ -45,5 +45,6 @@ tasks.named('test') {
 }
 
 bootJar {
-	mainClass = 'com.codedwebltd.CharitypillarApplication' // Replace with your actual main class
+	mainClass = 'com.codedwebltd.CharitypillarApplication' // Replace this with the full package path of your main class
 }
+
