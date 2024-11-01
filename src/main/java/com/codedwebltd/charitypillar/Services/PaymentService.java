@@ -22,6 +22,9 @@ public class PaymentService {
     private static final String API_KEY = "hQeEXVNf8mAU29Pdkdnfv66BmfCMVYitZajtpPNKZIXI36W7FG6MEwddvQ7Gedh1tfZ8VhcglTaaPbgsD5SGYIx1FaEOx4pO9BOR6nmgGIz6M3dCjghi87VTf7avo5hj";
     private static final String MERCHANT_ID = "30edd75f-44f5-465d-9cd7-1a6a24de9409";
     private static final String URL = "https://api.cryptomus.com/v1/payment";
+    private  static  final String URL_SUCCESS = "https://charitypillar-production.up.railway.app/success-callback";
+    private  static  final String URL_RETURN = "https://charitypillar-production.up.railway.app/success-callback";
+    private  static  final String URL_CALLBACK = "https://charitypillar-production.up.railway.app/success-callback";
 
     private final RestTemplate restTemplate;
 
@@ -30,11 +33,15 @@ public class PaymentService {
     }
 
     public ResponseEntity<String> sendPaymentRequest(String amount, String currency, String orderId) throws JsonProcessingException {
-        // Prepare the data for the API request
+        //Prepare the data for the API request
         Map<String, Object> data = new HashMap<>();
         data.put("amount", amount);
         data.put("currency", currency);
         data.put("order_id", orderId);
+        data.put("url_success",URL_SUCCESS);//After successful payment, the user can click on the button on the payment form and return to this URL.
+        data.put("url_return", URL_RETURN);//Before paying, the user can click on the button on the payment form and return to the store page at this URL.
+        data.put("url_callback",URL_CALLBACK);//Url to which webhooks with payment status will be sent
+
 
         // Generate the sign
         String jsonData = new ObjectMapper().writeValueAsString(data); // Convert data to JSON

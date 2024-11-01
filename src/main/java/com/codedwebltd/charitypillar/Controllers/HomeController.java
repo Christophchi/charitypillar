@@ -14,8 +14,11 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Controller
 public class HomeController {
@@ -43,15 +46,15 @@ public class HomeController {
         model.addAttribute("application_name", appName);
         model.addAttribute("projectedAmount", projectedAmount);
 
-        List<Transactions> transactionObject = trxService.fetchTransactions();
+        List<Transactions> transactionObject = trxService.fetchTransactions("completed");
         if(transactionObject.isEmpty()){
             transactionObject = new ArrayList<>();
         }
 
-        // Calculate the total amount of transactions
-        Long totalTransactions = transactionObject.stream()
-                .mapToLong(transaction -> Long.parseLong(transaction.getAmount()))
-                .sum();
+        // Calculate the total amount of transactions as a String
+        String totalTransactions = String.valueOf(transactionObject.stream()
+                .mapToDouble(transaction -> Double.parseDouble(transaction.getAmount()))
+                .sum());
 
 
         model.addAttribute("transactionObject", transactionObject);
@@ -70,14 +73,62 @@ public class HomeController {
                                        @RequestParam("donorName") String donorName,
                                        @RequestParam("Email") String Email) throws JsonProcessingException
     {
-        ResponseEntity<String> response = paymentService.sendPaymentRequest(amount, "USD", "10");
+        String transactionId = UUID.randomUUID().toString();
+        ResponseEntity<String> response = paymentService.sendPaymentRequest(amount, "USD", transactionId);
 
         // Parse the JSON response to extract the URL
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jsonNode = objectMapper.readTree(response.getBody());
         String url = jsonNode.path("result").path("url").asText();
 
+        //extract api data for processing.
+        String extractedAmount = jsonNode.path("result").path("amount").asText();
+        String createdOn = jsonNode.path("result").path("created_at").asText();
+        String updatedOn = jsonNode.path("result").path("updated_at").asText();
+        OffsetDateTime parseUpdatedOn = OffsetDateTime.parse(updatedOn);
+        OffsetDateTime parsedCreatedOn = OffsetDateTime.parse(createdOn);
+        String transactionReference = jsonNode.path("result").path("order_id").asText();
+        String currency = jsonNode.path("result").path("currency").asText();
+
+        //save to the transaction model before redirecting to the actual page.
+        trxService.saveTransactionRecord(
+                extractedAmount, parsedCreatedOn.toLocalDateTime(), parseUpdatedOn.toLocalDateTime(),"pending",transactionReference,
+                Email,donorName,"Crypto",currency,"donation"
+
+        );
+
         // Redirect the user to the payment URL
         return new RedirectView(url);
+    }
+
+    /*
+    *After successful payment, the user can click on the button on the payment form
+    * and return to this URL.
+    */
+    @GetMapping("/success-callback")
+    @ResponseBody
+    public String[] successCallback(){
+
+        return new String[]{"payment callback was clicked"};
+    }
+
+    /*
+    * Before paying, the user can click on the button on the payment form
+    * and return to the store page at this URL.
+    * */
+    @GetMapping("/return-callback")
+    @ResponseBody
+    public String[] returnCallback(){
+
+        return new String[]{"payment callback was clicked"};
+    }
+
+    /*
+    * Url to which webhooks with payment status will be sent
+    * */
+    @GetMapping("/url-callback")
+    @ResponseBody
+    public String urlCallback(){
+        return UUID.randomUUID().toString();
     }
 }
