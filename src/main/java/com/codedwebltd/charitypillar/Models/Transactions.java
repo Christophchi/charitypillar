@@ -19,18 +19,9 @@ public class Transactions {
     private Long id;
 
     //amount starts
+    @Getter
     @Column(name = "amount", nullable = false)
-    private Long amount;
-
-    public Long getAmount() {
-        return amount;
-    }
-
-    public void setAmount(Long amount) {
-        this.amount = amount;
-    }
-    //amount ends
-
+    private String amount;
 
     @Column(name = "created_on", nullable = false)
     private LocalDateTime createdOn;
@@ -44,8 +35,8 @@ public class Transactions {
     @Column(name = "transaction_reference", unique = true)
     private String transactionReference;
 
-    @Column(name = "donor_email")
-    private String donorEmail;
+    @Column(name = "email")
+    private String Email;
 
     @Column(name = "donor_name")
     private String donorName;
